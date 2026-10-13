@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ภารกิจ Smart Shopper - เรียนรู้แนวคิดเชิงคำนวณ ม.1</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Kanit & Press Start 2P for Pixel Vibe -->
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600;700&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <style>
+        :root {
+            --pixel-border: 4px solid #1e293b;
+        }
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #f0fdf4;
+            background-image: 
+                radial-gradient(#bbf7d0 1.5px, transparent 1.5px), 
+                radial-gradient(#bbf7d0 1.5px, #f0fdf4 1.5px);
+            background-size: 30px 30px;
+            background-position: 0 0, 15px 15px;
+            user-select: none;
+        }
+
+        .pixel-font {
+            font-family: 'Press Start 2P', monospace;
+        }
+
+        /* Custom Pixel Card Shadow Effects */
+        .pixel-card {
+            background-color: #ffffff;
+            border: 4px solid #1e293b;
+            box-shadow: 6px 6px 0px #1e293b;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .pixel-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 8px 8px 0px #1e293b;
+        }
+
+        .pixel-btn {
+            border: 3px solid #1e293b;
+            box-shadow: 4px 4px 0px #1e293b;
+            transition: all 0.1s ease;
+            font-weight: 600;
+        }
+
+        .pixel-btn:active:not(:disabled) {
+            transform: translate(3px, 3px);
+            box-shadow: 1px 1px 0px #1e293b;
+        }
+
+        .pixel-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        /* Pulse Animation for highlight */
+        @keyframes pixel-bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        .animate-pixel-bounce {
+            animation: pixel-bounce 1.5s infinite;
+        }
+
+        /* Grid Cell Styling for Level 3 Map */
+        .grid-cell {
+            aspect-ratio: 1;
+            transition: all 0.3s ease;
+        }
+
+        /* Custom Scrollbar for Code Blocks */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 flex flex-col justify-between">
+
+    <!-- Application Header & Top HUD -->
+    <header class="bg-emerald-600 border-b-4 border-slate-800 text-white p-3 sticky top-0 z-40 shadow-md">
+        <div class="max-w-5xl mx-mx-auto flex flex-wrap items-center justify-between gap-3 px-2">
+            <!-- App Logo & Title -->
+            <div class="flex items-center space-x-3">
+                <div class="w-11 h-11 bg-yellow-400 rounded-lg border-2 border-slate-900 flex items-center justify-center text-slate-900 text-2xl shadow">
+                    🛒
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-bold leading-tight flex items-center gap-2">
+                        <span>Smart Shopper</span>
+                        <span class="text-xs bg-yellow-300 text-slate-900 px-2 py-0.5 rounded-full font-bold border border-slate-800">วิทการคำนวณ ม.1</span>
+                    </h1>
+                    <p class="text-xs text-emerald-100">ภารกิจประยุกต์แนวคิดเชิงคำนวณ (Computational Thinking)</p>
+                </div>
+            </div>
+
+            <!-- CT Score Gauge & Level Progress Bar -->
+            <div class="flex items-center space-x-4 w-full md:w-auto justify-between md:justify-end">
+                <div class="bg-emerald-800 border-2 border-slate-900 rounded-xl px-3 py-1.5 flex items-center space-x-3 shadow-inner">
+                    <div class="text-xs font-bold text-yellow-300 flex flex-col items-center">
+                        <span>CT SCORE</span>
+                        <span id="score-text" class="text-sm text-white">0%</span>
+                    </div>
+                    <div class="w-28 md:w-36 bg-slate-700 h-4 rounded-full overflow-hidden border border-slate-900 relative">
+                        <div id="ct-bar" class="bg-gradient-to-r from-yellow-400 to-amber-500 h-full w-0 transition-all duration-500 rounded-full"></div>
+                    </div>
+                </div>
+
+                <!-- Mute / Sound Toggle Button -->
+                <button id="sound-btn" onclick="toggleSound()" class="pixel-btn bg-yellow-400 hover:bg-yellow-300 text-slate-900 p-2 rounded-lg text-sm flex items-center justify-center" title="เปิด/ปิด เสียง">
+                    <i id="sound-icon" class="fas fa-volume-up text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Level Navigation Tracker -->
+    <nav class="bg-emerald-100 border-b-2 border-slate-800 py-2 px-4 shadow-inner">
+        <div class="max-w-4xl mx-auto flex justify-between items-center text-xs md:text-sm font-semibold">
+            <div id="nav-stage-1" class="flex-1 text-center py-1.5 px-2 rounded-lg bg-emerald-600 text-white border-2 border-slate-800 font-bold shadow-sm transition-all">
+                <i class="fas fa-filter mr-1"></i> ด่านที่ 1: Abstraction
+            </div>
+            <div class="w-4 text-center text-slate-400"><i class="fas fa-chevron-right"></i></div>
+            <div id="nav-stage-2" class="flex-1 text-center py-1.5 px-2 rounded-lg bg-slate-200 text-slate-500 border-2 border-slate-400 transition-all">
+                <i class="fas fa-shapes mr-1"></i> ด่านที่ 2: Pattern Rec.
+            </div>
+            <div class="w-4 text-center text-slate-400"><i class="fas fa-chevron-right"></i></div>
+            <div id="nav-stage-3" class="flex-1 text-center py-1.5 px-2 rounded-lg bg-slate-200 text-slate-500 border-2 border-slate-400 transition-all">
+                <i class="fas fa-code mr-1"></i> ด่านที่ 3: Algorithm
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto p-4 flex-grow w-full">
+
+        <!-- Welcome Screen Section -->
+        <section id="welcome-screen" class="pixel-card p-6 md:p-8 text-center bg-white my-4">
+            <div class="inline-block p-4 bg-emerald-100 rounded-full text-5xl mb-3 border-2 border-slate-800 animate-pixel-bounce">
+                🏪
+            </div>
+            <h2 class="text-2xl md:text-3xl font-extrabold text-slate-800 mb-2">ยินดีต้อนรับสู่ซูเปอร์มาร์เก็ตอัจฉริยะ!</h2>
+            <p class="text-slate-600 max-w-xl mx-auto mb-6 text-sm md:text-base leading-relaxed">
+                สวมบทบาทเป็น <span class="font-bold text-emerald-600">Smart Shopper</span> ใช้ทักษะแนวคิดเชิงคำนวณ (Computational Thinking) 4 ด้าน ร่วมพิชิตภารกิจช้อปปิ้งของเข้าบ้านแบบประหยัด คุ้มค่า และถูกต้องที่สุด!
+            </p>
+
+            <!-- 4 CT Pillars Graphic Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8 text-left">
+                <div class="p-3 bg-blue-50 border-2 border-blue-300 rounded-lg text-xs">
+                    <div class="font-bold text-blue-700 text-sm mb-1"><i class="fas fa-puzzle-piece"></i> Decomposition</div>
+                    <p class="text-slate-600">ย่อยปัญหาใหญ่เป็นปัญหาย่อยๆ</p>
+                </div>
+                <div class="p-3 bg-purple-50 border-2 border-purple-300 rounded-lg text-xs">
+                    <div class="font-bold text-purple-700 text-sm mb-1"><i class="fas fa-filter"></i> Abstraction</div>
+                    <p class="text-slate-600">คัดกรองเฉพาะข้อมูลสำคัญ</p>
+                </div>
+                <div class="p-3 bg-amber-50 border-2 border-amber-300 rounded-lg text-xs">
+                    <div class="font-bold text-amber-700 text-sm mb-1"><i class="fas fa-clone"></i> Pattern Rec.</div>
+                    <p class="text-slate-600">การจดจำและเปรียบเทียบรูปแบบ</p>
+                </div>
+                <div class="p-3 bg-emerald-50 border-2 border-emerald-300 rounded-lg text-xs">
+                    <div class="font-bold text-emerald-700 text-sm mb-1"><i class="fas fa-route"></i> Algorithm</div>
+                    <p class="text-slate-600">วางลำดับขั้นตอนและ Debug</p>
+                </div>
+            </div>
+
+            <button onclick="startGame()" class="pixel-btn bg-emerald-500 hover:bg-emerald-400 text-white text-lg px-8 py-3 rounded-xl shadow-lg font-bold inline-flex items-center gap-2 transform active:scale-95 transition">
+                <span>เริ่มภารกิจช้อปปิ้ง</span>
+                <i class="fas fa-play"></i>
+            </button>
+        </section>
+
+        <!-- Level 1: Abstraction Challenge Container -->
+        <section id="level-1-screen" class="hidden">
+            <div class="pixel-card p-5 md:p-6 mb-4">
+                <div class="flex items-center justify-between border-b-2 border-slate-200 pb-3 mb-4">
+                    <div class="flex items-center space-x-2">
+                        <span class="bg-purple-600 text-white text-xs px-2.5 py-1 rounded-md font-bold uppercase">ด่านที่ 1</span>
+                        <h2 class="text-xl font-bold text-slate-800">คัดกรองข้อมูล (Abstraction Challenge)</h2>
+                    </div>
+                    <span id="l1-round-indicator" class="text-xs bg-slate-100 font-bold px-2 py-1 rounded border border-slate-300">ข้อ 1/2</span>
+                </div>
+
+                <!-- Scenario Instructions -->
+                <div class="bg-purple-50 border-l-4 border-purple-500 p-3.5 rounded-r-lg mb-5 text-xs md:text-sm text-slate-700">
+                    <p class="font-bold text-purple-900 mb-1"><i class="fas fa-lightbulb text-yellow-500 mr-1"></i> สถานการณ์:</p>
+                    <p>ป้ายสินค้าเต็มไปด้วยข้อความโฆษณา สโลแกน และรูปภาพที่ทำให้สับสน! ให้ผู้เรียนกดเลือก <span class="font-bold text-purple-700 underline">ข้อมูลจำเป็น 2 ข้อ</span> ที่ต้องใช้ในการคำนวณเงินเพื่อจ่ายจริงเท่านั้น!</p>
+                </div>
+
+                <!-- Cluttered Product Label Display -->
+                <div class="bg-amber-50 border-2 border-dashed border-amber-300 rounded-xl p-4 mb-5 relative overflow-hidden">
+                    <div class="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded shadow rotate-6">
+                        🔥 HOT SALE!
+                    </div>
+                    
+                    <div class="flex flex-col md:flex-row items-center gap-4">
+                        <div class="text-6xl p-3 bg-white border-2 border-slate-800 rounded-xl shadow-sm text-center min-w-[100px]" id="l1-product-emoji">
+                            🧃
+                        </div>
+                        <div class="flex-grow text-center md:text-left">
+                            <h3 id="l1-product-title" class="text-lg font-bold text-slate-800">น้ำผลไม้พรีเมียม สดชื่นสะใจ</h3>
+                            <p id="l1-product-slogan" class="text-xs text-slate-500 italic">"ดื่มแล้วอารมณ์ดี มีวิตามินซีสูงปรี๊ด 100%"</p>
+                        </div>
+                    </div>
+
+                    <!-- Clickable Data Tags Grid -->
+                    <div class="mt-4 pt-3 border-t border-amber-200">
+                        <p class="text-xs font-bold text-slate-600 mb-2">👇 คลิกเลือกข้อมูลที่จำเป็นในการคำนวณเงินสุทธิ (เลือก 2 ข้อ):</p>
+                        <div id="l1-tags-container" class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                            <!-- JS will generate tags dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Level 1 Action Controls -->
+                <div class="flex justify-between items-center pt-2">
+                    <div id="l1-selected-count" class="text-xs md:text-sm font-semibold text-slate-600">
+                        เลือกแล้ว: <span id="l1-count" class="text-purple-600 font-bold text-lg">0</span> / 2 ข้อ
+                    </div>
+                    <button id="l1-submit-btn" onclick="checkLevel1Answer()" disabled class="pixel-btn bg-purple-600 hover:bg-purple-500 text-white px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2">
+                        <span>ยืนยันคำตอบ</span>
+                        <i class="fas fa-check"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Level 2: Pattern Recognition Challenge Container -->
+        <section id="level-2-screen" class="hidden">
+            <div class="pixel-card p-5 md:p-6 mb-4">
+                <div class="flex items-center justify-between border-b-2 border-slate-200 pb-3 mb-4">
+                    <div class="flex items-center space-x-2">
+                        <span class="bg-amber-600 text-white text-xs px-2.5 py-1 rounded-md font-bold uppercase">ด่านที่ 2</span>
+                        <h2 class="text-xl font-bold text-slate-800">จับคู่รูปแบบโปรโมชัน (Pattern Recognition)</h2>
+                    </div>
+                    <span id="l2-question-indicator" class="text-xs bg-slate-100 font-bold px-2 py-1 rounded border border-slate-300">โจทย์ 1/2</span>
+                </div>
+
+                <!-- Scenario Instructions -->
+                <div class="bg-amber-50 border-l-4 border-amber-500 p-3.5 rounded-r-lg mb-5 text-xs md:text-sm text-slate-700">
+                    <p class="font-bold text-amber-900 mb-1"><i class="fas fa-calculator mr-1"></i> สถานการณ์:</p>
+                    <p>เปรียบเทียบรูปแบบโปรโมชันสองยี่ห้อ (Pattern Recognition) คำนวณราคาเฉลี่ยต่อหน่วยเพื่อเลือกซื้อตัวเลือกที่ <span class="font-bold text-amber-800 underline">คุ้มค่าที่สุด (ราคาต่อชิ้นถูกที่สุด)</span></p>
+                </div>
+
+                <!-- Question Prompt Box -->
+                <div class="bg-slate-50 border-2 border-slate-800 rounded-xl p-4 mb-5 text-center">
+                    <div id="l2-prompt-emoji" class="text-4xl mb-1">🥛</div>
+                    <h3 id="l2-prompt-title" class="text-lg font-bold text-slate-800">เปรียบเทียบการซื้อนมกล่อง</h3>
+                    <p class="text-xs text-slate-500">เราต้องการซื้อนมในราคาต่อหน่วยที่ประหยัดที่สุด</p>
+                </div>
+
+                <!-- Option A vs Option B Cards Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                    <!-- Option A Card -->
+                    <button id="l2-opt-a" onclick="selectLevel2Option('A')" class="pixel-card p-4 text-left hover:border-amber-500 hover:bg-amber-50/50 transition relative group cursor-pointer">
+                        <div class="absolute top-2 right-2 bg-amber-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">A</div>
+                        <h4 id="l2-brand-a" class="font-bold text-amber-900 text-base mb-1">ยี่ห้อ A</h4>
+                        <div id="l2-desc-a" class="text-xs md:text-sm text-slate-700 space-y-1 mb-3">
+                            <!-- JS populated -->
+                        </div>
+                        <div class="bg-amber-100/80 p-2 rounded-lg border border-amber-300 text-xs text-amber-900 font-semibold text-center">
+                            💡 คำนวณ: <span id="l2-calc-a" class="font-bold">...</span>
+                        </div>
+                    </button>
+
+                    <!-- Option B Card -->
+                    <button id="l2-opt-b" onclick="selectLevel2Option('B')" class="pixel-card p-4 text-left hover:border-amber-500 hover:bg-amber-50/50 transition relative group cursor-pointer">
+                        <div class="absolute top-2 right-2 bg-amber-500 text-white text-xs font-bold w-6 h-6 rounded-full flex items-center justify-center">B</div>
+                        <h4 id="l2-brand-b" class="font-bold text-amber-900 text-base mb-1">ยี่ห้อ B</h4>
+                        <div id="l2-desc-b" class="text-xs md:text-sm text-slate-700 space-y-1 mb-3">
+                            <!-- JS populated -->
+                        </div>
+                        <div class="bg-amber-100/80 p-2 rounded-lg border border-amber-300 text-xs text-amber-900 font-semibold text-center">
+                            💡 คำนวณ: <span id="l2-calc-b" class="font-bold">...</span>
+                        </div>
+                    </button>
+                </div>
+
+                <!-- Interactive Calculation Scratchpad Widget -->
+                <div class="bg-slate-100 p-3 rounded-lg border border-slate-300 text-xs flex flex-wrap items-center justify-between gap-2">
+                    <span class="text-slate-600 font-medium"><i class="fas fa-info-circle text-amber-600"></i> ทริก: ลองคำนวณหาราคาต่อชิ้นก่อนเลือกคำตอบ!</span>
+                    <button onclick="toggleScratchpad()" class="text-xs text-amber-700 font-bold underline hover:text-amber-800">
+                        <i class="fas fa-calculator"></i> <span id="scratch-toggle-text">เปิดเครื่องคิดเลขช่วยคำนวณ</span>
+                    </button>
+                </div>
+
+                <!-- Mini Scratchpad Calculator Modal/Drawer -->
+                <div id="scratchpad" class="hidden mt-3 p-3 bg-white border-2 border-slate-800 rounded-lg text-xs">
+                    <div class="flex justify-between items-center mb-2 font-bold text-slate-700">
+                        <span>เครื่องมือช่วยคำนวณด่วน</span>
+                        <span class="text-slate-400">หน่วย: บาท</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <input id="calc-num1" type="number" placeholder="ราคา" class="w-20 p-1.5 border border-slate-300 rounded text-center">
+                        <span>÷</span>
+                        <input id="calc-num2" type="number" placeholder="จำนวน" class="w-20 p-1.5 border border-slate-300 rounded text-center">
+                        <button onclick="runMiniCalc()" class="pixel-btn bg-amber-500 text-white px-3 py-1.5 rounded font-bold">=</button>
+                        <span id="calc-result" class="font-bold text-amber-700 text-sm ml-2">? บาท/ชิ้น</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Level 3: Algorithm & Debugging Challenge Container -->
+        <section id="level-3-screen" class="hidden">
+            <div class="pixel-card p-4 md:p-6 mb-4">
+                <div class="flex items-center justify-between border-b-2 border-slate-200 pb-3 mb-3">
+                    <div class="flex items-center space-x-2">
+                        <span class="bg-emerald-600 text-white text-xs px-2.5 py-1 rounded-md font-bold uppercase">ด่านที่ 3</span>
+                        <h2 class="text-xl font-bold text-slate-800">เขียนอัลกอริทึมช้อปปิ้ง & Debugging</h2>
+                    </div>
+                </div>
+
+                <!-- Mission Specs Banner -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4 text-xs font-bold text-center">
+                    <div class="bg-emerald-50 border border-emerald-300 p-2 rounded-lg text-emerald-900">
+                        💰 งบประมาณ: <span class="text-emerald-600 font-extrabold text-sm" id="l3-budget-display">300</span> บาท
+                    </div>
+                    <div class="bg-blue-50 border border-blue-300 p-2 rounded-lg text-blue-900">
+                        🛒 รถเข็นเก็บได้: <span class="text-blue-600 font-extrabold text-sm" id="l3-items-display">0/2</span> รายการ
+                    </div>
+                    <div class="bg-purple-50 border border-purple-300 p-2 rounded-lg text-purple-900">
+                        💵 เงินคงเหลือ: <span class="text-purple-600 font-extrabold text-sm" id="l3-rem-budget">300</span> บาท
+                    </div>
+                    <div class="bg-amber-50 border border-amber-300 p-2 rounded-lg text-amber-900">
+                        🎯 เป้าหมาย: หยิบครบ + ถึงแคชเชียร์
+                    </div>
+                </div>
+
+                <!-- Level 3 Workspace: Grid Map (Left) + Block Editor (Right) -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+                    
+                    <!-- Left: 5x5 Supermarket Grid Visualizer (5 Cols) -->
+                    <div class="lg:col-span-5 flex flex-col items-center">
+                        <div class="bg-slate-800 p-2 rounded-2xl shadow-md w-full max-w-[320px]">
+                            <div id="grid-container" class="grid grid-cols-5 gap-1.5 bg-slate-900 p-1.5 rounded-xl">
+                                <!-- 5x5 cells created dynamically in JS -->
+                            </div>
+                        </div>
+                        
+                        <!-- Map Legend -->
+                        <div class="flex flex-wrap justify-center gap-3 text-[11px] text-slate-600 mt-2 font-medium">
+                            <span class="flex items-center gap-1">🛒 รถเข็น (จุดเริ่ม)</span>
+                            <span class="flex items-center gap-1">🍎 สินค้า A (100฿)</span>
+                            <span class="flex items-center gap-1">🥛 สินค้า B (120฿)</span>
+                            <span class="flex items-center gap-1">🚩 แคชเชียร์</span>
+                        </div>
+                    </div>
+
+                    <!-- Right: Algorithm Block Builder & Sequence Queue (7 Cols) -->
+                    <div class="lg:col-span-7 flex flex-col gap-3">
+                        
+                        <!-- Command Palette Blocks -->
+                        <div class="bg-slate-50 p-3 rounded-xl border-2 border-slate-300">
+                            <label class="block text-xs font-bold text-slate-700 mb-2">
+                                <i class="fas fa-cubes text-emerald-600"></i> บล็อกคำสั่ง (คลิกเพื่อเพิ่มใส่ลำดับ):
+                            </label>
+                            <div class="flex flex-wrap gap-1.5">
+                                <button onclick="addBlock('MOVE_FORWARD')" class="pixel-btn bg-blue-500 hover:bg-blue-400 text-white text-xs px-2.5 py-1.5 rounded flex items-center gap-1">
+                                    <i class="fas fa-arrow-up"></i> เดินหน้า
+                                </button>
+                                <button onclick="addBlock('TURN_LEFT')" class="pixel-btn bg-indigo-500 hover:bg-indigo-400 text-white text-xs px-2.5 py-1.5 rounded flex items-center gap-1">
+                                    <i class="fas fa-undo"></i> เลี้ยวซ้าย
+                                </button>
+                                <button onclick="addBlock('TURN_RIGHT')" class="pixel-btn bg-indigo-500 hover:bg-indigo-400 text-white text-xs px-2.5 py-1.5 rounded flex items-center gap-1">
+                                    <i class="fas fa-redo"></i> เลี้ยวขวา
+                                </button>
+                                <button onclick="addBlock('PICK_ITEM')" class="pixel-btn bg-amber-500 hover:bg-amber-400 text-white text-xs px-2.5 py-1.5 rounded flex items-center gap-1">
+                                    <i class="fas fa-hand-holding"></i> หยิบสินค้า
+                                </button>
+                                <button onclick="addBlock('IF_MONEY_SNACK')" class="pixel-btn bg-purple-600 hover:bg-purple-500 text-white text-xs px-2.5 py-1.5 rounded flex items-center gap-1">
+                                    <i class="fas fa-cookie-bite"></i> ถ้าเงินเหลือ > 50 ซื้อขนม
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Sequence Queue Box (Code Workspace) -->
+                        <div class="bg-white p-3 rounded-xl border-2 border-slate-800 min-h-[160px] flex flex-col justify-between">
+                            <div>
+                                <div class="flex justify-between items-center mb-2 pb-1 border-b text-xs font-bold text-slate-700">
+                                    <span><i class="fas fa-list-ol text-emerald-600"></i> ลำดับอัลกอริทึมที่เขียน:</span>
+                                    <button onclick="clearBlocks()" class="text-red-500 hover:text-red-700 text-xs flex items-center gap-1 font-semibold">
+                                        <i class="fas fa-trash-alt"></i> ล้างทั้งหมด
+                                    </button>
+                                </div>
+
+                                <!-- Sequence Drop/Display list -->
+                                <div id="blocks-sequence" class="flex flex-wrap gap-1.5 min-h-[80px] p-2 bg-slate-50 rounded-lg border border-dashed border-slate-300 items-start">
+                                    <span id="empty-seq-msg" class="text-xs text-slate-400 italic self-center mx-auto">ยังไม่มีคำสั่ง กดปุ่มบล็อกด้านบนเพื่อสร้างอัลกอริทึม</span>
+                                </div>
+                            </div>
+
+                            <!-- Execution Controls -->
+                            <div class="flex flex-wrap gap-2 mt-3 pt-2 border-t border-slate-200">
+                                <button id="btn-run-algo" onclick="runAlgorithm()" class="pixel-btn bg-emerald-500 hover:bg-emerald-400 text-white px-4 py-2 rounded-lg text-xs md:text-sm font-bold flex-1 flex items-center justify-center gap-1">
+                                    <i class="fas fa-play"></i> Run Algorithm
+                                </button>
+                                <button id="btn-debug-algo" onclick="debugAlgorithm()" class="pixel-btn bg-amber-500 hover:bg-amber-400 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-bold flex items-center gap-1">
+                                    <i class="fas fa-bug"></i> Debug (ทีละสเต็ป)
+                                </button>
+                                <button onclick="resetGridPosition()" class="pixel-btn bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-2 rounded-lg text-xs font-bold">
+                                    <i class="fas fa-sync-alt"></i> รีเซ็ต
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Concept Explanation Modal Popup (Appears after completing each stage) -->
+    <div id="concept-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="pixel-card bg-white max-w-md w-full p-6 text-center relative animate-pixel-bounce">
+            <div id="modal-badge-icon" class="w-16 h-16 rounded-full bg-yellow-400 border-4 border-slate-800 flex items-center justify-center text-3xl mx-auto mb-3 shadow-md">
+                🎓
+            </div>
+            <h3 id="modal-concept-title" class="text-xl font-extrabold text-slate-800 mb-1">ถอดรหัสแนวคิดเชิงคำนวณ!</h3>
+            <p id="modal-concept-pillar" class="text-xs font-bold text-purple-600 uppercase tracking-wider mb-3">Abstraction (การทอนรายละเอียด)</p>
+            
+            <div id="modal-concept-body" class="bg-slate-50 border-2 border-slate-200 rounded-xl p-4 text-xs md:text-sm text-slate-700 text-left mb-5 space-y-2">
+                <!-- Dynamic Thai CT explanation inserted via JS -->
+            </div>
+
+            <button onclick="closeConceptModal()" class="pixel-btn bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold w-full py-2.5 rounded-lg">
+                ลุยต่อด่านถัดไป <i class="fas fa-arrow-right ml-1"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Final Score Summary Screen Modal -->
+    <div id="final-summary-modal" class="fixed inset-0 bg-slate-900/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="pixel-card bg-white max-w-lg w-full p-6 text-center relative">
+            <div class="text-5xl mb-2">🏆</div>
+            <h2 class="text-2xl font-extrabold text-slate-800">ภารกิจสำเร็จ! ยอดเยี่ยมมาก</h2>
+            <p class="text-xs text-slate-500 mb-4">คุณคือสุดยอด Smart Shopper ผู้เชี่ยวชาญ Computational Thinking!</p>
+
+            <div class="bg-amber-50 border-2 border-amber-300 rounded-xl p-4 mb-5">
+                <div class="text-xs text-amber-800 font-bold mb-1">คะแนน Computational Thinking Score</div>
+                <div class="text-4xl font-extrabold text-amber-600 pixel-font my-1" id="final-ct-score">100%</div>
+                <p class="text-xs text-slate-600 mt-2" id="final-eval-text">สุดยอด! สามารถวิเคราะห์ข้อมูล ค้นหารูปแบบ และเขียนอัลกอริทึมแก้ปัญหาได้อย่างสมบูรณ์แบบ</p>
+            </div>
+
+            <!-- CT Skills Breakdown Badges -->
+            <div class="grid grid-cols-2 gap-2 text-left mb-6 text-xs">
+                <div class="p-2 bg-emerald-50 border border-emerald-300 rounded flex items-center space-x-2">
+                    <i class="fas fa-check-circle text-emerald-600 text-base"></i>
+                    <div>
+                        <div class="font-bold text-slate-800">Decomposition</div>
+                        <div class="text-[10px] text-slate-500">แบ่งปัญหามอบหมายงบ</div>
+                    </div>
+                </div>
+                <div class="p-2 bg-purple-50 border border-purple-300 rounded flex items-center space-x-2">
+                    <i class="fas fa-check-circle text-purple-600 text-base"></i>
+                    <div>
+                        <div class="font-bold text-slate-800">Abstraction</div>
+                        <div class="text-[10px] text-slate-500">เลือกเฉพาะราคา & ลด</div>
+                    </div>
+                </div>
+                <div class="p-2 bg-amber-50 border border-amber-300 rounded flex items-center space-x-2">
+                    <i class="fas fa-check-circle text-amber-600 text-base"></i>
+                    <div>
+                        <div class="font-bold text-slate-800">Pattern Rec.</div>
+                        <div class="text-[10px] text-slate-500">เทียบโปรโมชันคุ้มค่า</div>
+                    </div>
+                </div>
+                <div class="p-2 bg-blue-50 border border-blue-300 rounded flex items-center space-x-2">
+                    <i class="fas fa-check-circle text-blue-600 text-base"></i>
+                    <div>
+                        <div class="font-bold text-slate-800">Algorithm Design</div>
+                        <div class="text-[10px] text-slate-500">วางสเต็ป & Debug โค้ด</div>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="restartGame()" class="pixel-btn bg-emerald-500 hover:bg-emerald-400 text-white text-sm font-bold px-6 py-2.5 rounded-lg inline-flex items-center gap-2">
+                <i class="fas fa-redo"></i> เล่นอีกครั้ง
+            </button>
+        </div>
+    </div>
+
+    <!-- Custom Notification Toast -->
+    <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white text-xs md:text-sm px-4 py-2.5 rounded-xl border-2 border-slate-700 shadow-2xl hidden flex items-center space-x-2">
+        <span id="toast-icon">💡</span>
+        <span id="toast-message">ข้อความแจ้งเตือน</span>
+    </div>
+
+    <!-- Application Footer -->
+    <footer class="bg-slate-800 text-slate-300 text-xs text-center py-3 border-t-2 border-slate-900">
+        <p>สื่อการเรียนการสอนวิทยาการคำนวณ ระดับชั้นมัธยมศึกษาปีที่ 1 | ภารกิจ Smart Shopper</p>
+    </footer>
+
+    <script>
+        // Sound & Audio FX Synthesis via Web Audio API
+        let audioCtx = null;
+        let isMuted = false;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (isMuted) return;
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'click') {
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.05);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                } else if (type === 'success') {
+                    osc.frequency.setValueAtTime(523.25, now); // C5
+                    osc.frequency.setValueAtTime(659.25, now + 0.08); // E5
+                    osc.frequency.setValueAtTime(783.99, now + 0.16); // G5
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'error') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.linearRampToValueAtTime(110, now + 0.2);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                } else if (type === 'step') {
+                    osc.frequency.setValueAtTime(300, now);
+                    gain.gain.setValueAtTime(0.05, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.04);
+                    osc.start(now);
+                    osc.stop(now + 0.04);
+                }
+            } catch (e) {
+                // Audio fallback
+            }
+        }
+
+        function toggleSound() {
+            isMuted = !isMuted;
+            const icon = document.getElementById('sound-icon');
+            if (isMuted) {
+                icon.className = 'fas fa-volume-mute text-lg text-red-600';
+            } else {
+                icon.className = 'fas fa-volume-up text-lg';
+                playSound('click');
+            }
+        }
+
+        // Global Game State
+        const gameState = {
+            currentLevel: 1,
+            ctScore: 0,
+            level1Round: 0,
+            level2Question: 0,
+            gridSize: 5,
+            cartPos: { x: 0, y: 0 },
+            cartDir: 1, // 0: Up, 1: Right, 2: Down, 3: Left
+            itemACollected: false,
+            itemBCollected: false,
+            snackBought: false,
+            remainingBudget: 300,
+            initialBudget: 300,
+            commands: [],
+            isExecuting: false,
+            pendingNextLevel: null
+        };
+
+        // Level 1 Data (Abstraction)
+        const level1Data = [
+            {
+                emoji: '🧃',
+                title: 'กล่องน้ำส้มสายน้ำผึ้ง 100%',
+                slogan: 'ประโยชน์เต็มกล่อง วิตามินซีสูง!',
+                tags: [
+                    { text: 'ราคาปกติ 120 บาท', isEssential: true },
+                    { text: 'คูปองส่วนลด 20 บาท', isEssential: true },
+                    { text: 'ยี่ห้อ: OrangeQueen', isEssential: false },
+                    { text: 'กล่องสีส้มสดใส ลายการ์ตูน', isEssential: false },
+                    { text: 'สโลแกน: สดชื่น อร่อยฟิน', isEssential: false },
+                    { text: 'วันหมดอายุ: 12/2026', isEssential: false }
+                ]
+            },
+            {
+                emoji: '🥣',
+                title: 'ซีเรียลอาหารเช้าธัญพืช',
+                slogan: 'กรุบกรอบ มีประโยชน์ อิ่มท้องนาน',
+                tags: [
+                    { text: 'ป้ายราคาติดหน้าร้าน 85 บาท', isEssential: true },
+                    { text: 'โปรโมชันลดทันที 15 บาท', isEssential: true },
+                    { text: 'ภาพพรีเซนเตอร์สุดเท่', isEssential: false },
+                    { text: 'ขนาดกล่องใหญ่พิเศษ', isEssential: false },
+                    { text: 'คำเตือน: ควรเก็บในที่แห้ง', isEssential: false },
+                    { text: 'แถมฟรี! สติ๊กเกอร์สะสม 1 ใบ', isEssential: false }
+                ]
+            }
+        ];
+
+        let selectedL1Tags = [];
+
+        // Level 2 Data (Pattern Recognition)
+        const level2Data = [
+            {
+                emoji: '🥛',
+                title: 'เปรียบเทียบซื้อนมกล่องรสจืด',
+                optA: {
+                    brand: 'นมยี่ห้อ A',
+                    desc: ['• ราคาปกติกล่องละ 20 บาท', '• โปรโมชัน: ซื้อ 2 แถม 1 กล่อง (ได้ 3 กล่อง)'],
+                    calc: 'จ่าย 40 บาท ได้ 3 กล่อง (เฉลี่ยกล่องละ 13.33 บาท)',
+                    unitPrice: 13.33,
+                    isBest: true
+                },
+                optB: {
+                    brand: 'นมยี่ห้อ B',
+                    desc: ['• ราคาปกติกล่องละ 18 บาท', '• โปรโมชัน: ลดราคา 10%'],
+                    calc: 'ลด 1.8 บาท เหลือกล่องละ 16.20 บาท',
+                    unitPrice: 16.20,
+                    isBest: false
+                }
+            },
+            {
+                emoji: '🍪',
+                title: 'เปรียบเทียบคุ้กกี้ช็อกโกแลต',
+                optA: {
+                    brand: 'คุ้กกี้แบรนด์ X',
+                    desc: ['• ถุงละ 40 บาท', '• ซื้อชิ้นแรก 40 บาท ชิ้นที่สองลด 50% (2 ชิ้น)'],
+                    calc: 'จ่าย 40 + 20 = 60 บาท (เฉลี่ยชิ้นละ 30 บาท)',
+                    unitPrice: 30.0,
+                    isBest: false
+                },
+                optB: {
+                    brand: 'คุ้กกี้แบรนด์ Y',
+                    desc: ['• ถุงละ 36 บาท', '• ลดทันที 25% ทุกถุง'],
+                    calc: 'ลดถุงละ 9 บาท เหลือถุงละ 27 บาท',
+                    unitPrice: 27.0,
+                    isBest: true
+                }
+            }
+        ];
+
+        function startGame() {
+            playSound('click');
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('level-1-screen').classList.remove('hidden');
+            gameState.currentLevel = 1;
+            loadLevel1Round(0);
+        }
+
+        function updateScore(addPoints) {
+            gameState.ctScore = Math.min(100, gameState.ctScore + addPoints);
+            document.getElementById('score-text').innerText = `${gameState.ctScore}%`;
+            document.getElementById('ct-bar').style.width = `${gameState.ctScore}%`;
+        }
+
+        function showToast(msg, icon = '💡') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').innerText = msg;
+            document.getElementById('toast-icon').innerText = icon;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+
+        function loadLevel1Round(roundIdx) {
+            gameState.level1Round = roundIdx;
+            selectedL1Tags = [];
+            const data = level1Data[roundIdx];
+
+            document.getElementById('l1-round-indicator').innerText = `ข้อ ${roundIdx + 1}/${level1Data.length}`;
+            document.getElementById('l1-product-emoji').innerText = data.emoji;
+            document.getElementById('l1-product-title').innerText = data.title;
+            document.getElementById('l1-product-slogan').innerText = `"${data.slogan}"`;
+            
+            const container = document.getElementById('l1-tags-container');
+            container.innerHTML = '';
+
+            // Shuffle tags for variety
+            const shuffledTags = [...data.tags].sort(() => Math.random() - 0.5);
+
+            shuffledTags.forEach((tag, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `pixel-btn p-3 rounded-lg text-xs md:text-sm text-left flex items-center justify-between bg-white hover:bg-purple-50 transition border-2 border-slate-700`;
+                btn.innerHTML = `
+                    <span>${tag.text}</span>
+                    <i class="far fa-circle text-slate-400 text-base font-bold"></i>
+                `;
+                btn.onclick = () => toggleL1Tag(btn, tag);
+                container.appendChild(btn);
+            });
+
+            updateL1ButtonState();
+        }
+
+        function toggleL1Tag(btnElement, tagData) {
+            playSound('click');
+            const icon = btnElement.querySelector('i');
+            const isSelected = selectedL1Tags.some(item => item.text === tagData.text);
+
+            if (isSelected) {
+                selectedL1Tags = selectedL1Tags.filter(item => item.text !== tagData.text);
+                btnElement.classList.remove('bg-purple-100', 'border-purple-600', 'text-purple-900');
+                btnElement.classList.add('bg-white');
+                icon.className = 'far fa-circle text-slate-400 text-base font-bold';
+            } else {
+                if (selectedL1Tags.length >= 2) {
+                    showToast('เลือกได้สูงสุด 2 ข้อเท่านั้นครับ!', '⚠️');
+                    return;
+                }
+                selectedL1Tags.push(tagData);
+                btnElement.classList.add('bg-purple-100', 'border-purple-600', 'text-purple-900');
+                btnElement.classList.remove('bg-white');
+                icon.className = 'fas fa-check-circle text-purple-600 text-base font-bold';
+            }
+
+            updateL1ButtonState();
+        }
+
+        function updateL1ButtonState() {
+            document.getElementById('l1-count').innerText = selectedL1Tags.length;
+            const submitBtn = document.getElementById('l1-submit-btn');
+            submitBtn.disabled = selectedL1Tags.length !== 2;
+        }
+
+        function checkLevel1Answer() {
+            const allCorrect = selectedL1Tags.every(tag => tag.isEssential) && selectedL1Tags.length === 2;
+
+            if (allCorrect) {
+                playSound('success');
+                updateScore(15);
+                
+                if (gameState.level1Round + 1 < level1Data.length) {
+                    showToast('ถูกต้อง! ข้อมูลราคาสินค้าและส่วนลดคือสิ่งสำคัญ', '🎉');
+                    setTimeout(() => {
+                        loadLevel1Round(gameState.level1Round + 1);
+                    }, 1200);
+                } else {
+                    // Level 1 Completed -> Show Abstraction Concept Modal
+                    showConceptModal(
+                        'Abstraction (แนวคิดเชิงนามธรรม)',
+                        'การคัดกรองเฉพาะข้อมูลที่สำคัญและจำเป็นต่อการแก้ปัญหา',
+                        `
+                        <p class="mb-2">เก่งมาก! นักเรียนสามารถคัดกรอง <strong>"ราคาปกติ"</strong> และ <strong>"ส่วนลด"</strong> ออกมาจากป้ายสินค้าที่มีข้อความโฆษณามากมายได้สำเร็จ!</p>
+                        <div class="bg-purple-100 p-2.5 rounded-lg border border-purple-300 text-purple-900 font-semibold">
+                            💡 ในชีวิตจริง: ข้อมูลอย่างสโลแกน สีกล่อง หรือวันหมดอายุ ไม่ได้นำมาใช้ในการคำนวณเงินที่เราต้องจ่าย!
+                        </div>
+                        `,
+                        () => startLevel2()
+                    );
+                }
+            } else {
+                playSound('error');
+                showToast('ยังไม่ถูกต้อง ลองพิจารณาข้อมูลที่ใช้คิด "เงินสุทธิ" อีกครั้ง!', '❌');
+            }
+        }
+
+        function startLevel2() {
+            gameState.currentLevel = 2;
+            document.getElementById('level-1-screen').classList.add('hidden');
+            document.getElementById('level-2-screen').classList.remove('hidden');
+
+            // Update Nav UI
+            document.getElementById('nav-stage-1').className = 'flex-1 text-center py-1.5 px-2 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300';
+            document.getElementById('nav-stage-2').className = 'flex-1 text-center py-1.5 px-2 rounded-lg bg-emerald-600 text-white border-2 border-slate-800 font-bold shadow-sm';
+
+            loadLevel2Question(0);
+        }
+
+        function loadLevel2Question(qIdx) {
+            gameState.level2Question = qIdx;
+            const q = level2Data[qIdx];
+
+            document.getElementById('l2-question-indicator').innerText = `โจทย์ ${qIdx + 1}/${level2Data.length}`;
+            document.getElementById('l2-prompt-emoji').innerText = q.emoji;
+            document.getElementById('l2-prompt-title').innerText = q.title;
+
+            // Option A Setup
+            document.getElementById('l2-brand-a').innerText = q.optA.brand;
+            document.getElementById('l2-desc-a').innerHTML = q.optA.desc.map(d => `<p>${d}</p>`).join('');
+            document.getElementById('l2-calc-a').innerText = q.optA.calc;
+
+            // Option B Setup
+            document.getElementById('l2-brand-b').innerText = q.optB.brand;
+            document.getElementById('l2-desc-b').innerHTML = q.optB.desc.map(d => `<p>${d}</p>`).join('');
+            document.getElementById('l2-calc-b').innerText = q.optB.calc;
+        }
+
+        function selectLevel2Option(choice) {
+            const q = level2Data[gameState.level2Question];
+            const isCorrect = (choice === 'A' && q.optA.isBest) || (choice === 'B' && q.optB.isBest);
+
+            if (isCorrect) {
+                playSound('success');
+                updateScore(18);
+
+                if (gameState.level2Question + 1 < level2Data.length) {
+                    showToast('ถูกต้อง! ตัวเลือกนี้ราคาเฉลี่ยต่อหน่วยถูกที่สุด', '🎉');
+                    setTimeout(() => {
+                        loadLevel2Question(gameState.level2Question + 1);
+                    }, 1200);
+                } else {
+                    // Level 2 Complete -> Show Concept Modal
+                    showConceptModal(
+                        'Pattern Recognition (การจดจำรูปแบบ)',
+                        'การเปรียบเทียบเพื่อหาแบบแผน ความคุ้มค่า หรือลักษณะร่วมกัน',
+                        `
+                        <p class="mb-2">ยอดเยี่ยม! นักเรียนสามารถจดจำรูปแบบการคำนวณโปรโมชัน (ซื้อ X แถม Y vs ลด %) เพื่อเปรียบเทียบราคาต่อชิ้นได้อย่างแม่นยำ!</p>
+                        <div class="bg-amber-100 p-2.5 rounded-lg border border-amber-300 text-amber-900 font-semibold">
+                            💡 ในชีวิตจริง: การแปลงป้ายโปรโมชันรูปแบบต่างๆ ให้เป็น "ราคาเฉลี่ยต่อหน่วย" ช่วยให้เราช้อปปิ้งได้อย่างฉลาดที่สุด!
+                        </div>
+                        `,
+                        () => startLevel3()
+                    );
+                }
+            } else {
+                playSound('error');
+                showToast('ยังไม่ใช่ออปชันที่คุ้มที่สุด ลองเปรียบเทียบราคาต่อหน่วยอีกครั้ง!', '❌');
+            }
+        }
+
+        // Mini Calculator Scratchpad Toggle
+        function toggleScratchpad() {
+            playSound('click');
+            const pad = document.getElementById('scratchpad');
+            const txt = document.getElementById('scratch-toggle-text');
+            if (pad.classList.contains('hidden')) {
+                pad.classList.remove('hidden');
+                txt.innerText = 'ซ่อนเครื่องคิดเลข';
+            } else {
+                pad.classList.add('hidden');
+                txt.innerText = 'เปิดเครื่องคิดเลขช่วยคำนวณ';
+            }
+        }
+
+        function runMiniCalc() {
+            playSound('click');
+            const n1 = parseFloat(document.getElementById('calc-num1').value);
+            const n2 = parseFloat(document.getElementById('calc-num2').value);
+            if (!isNaN(n1) && !isNaN(n2) && n2 !== 0) {
+                const res = (n1 / n2).toFixed(2);
+                document.getElementById('calc-result').innerText = `${res} บาท/ชิ้น`;
+            } else {
+                document.getElementById('calc-result').innerText = `ป้อนตัวเลขให้ถูกต้อง!`;
+            }
+        }
+
+        function startLevel3() {
+            gameState.currentLevel = 3;
+            document.getElementById('level-2-screen').classList.add('hidden');
+            document.getElementById('level-3-screen').classList.remove('hidden');
+
+            // Update Nav UI
+            document.getElementById('nav-stage-2').className = 'flex-1 text-center py-1.5 px-2 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-300';
+            document.getElementById('nav-stage-3').className = 'flex-1 text-center py-1.5 px-2 rounded-lg bg-emerald-600 text-white border-2 border-slate-800 font-bold shadow-sm';
+
+            initLevel3Grid();
+        }
+
+        function initLevel3Grid() {
+            // Level 3 Initial Map Setup
+            gameState.cartPos = { x: 0, y: 0 };
+            gameState.cartDir = 1; // Facing Right
+            gameState.itemACollected = false;
+            gameState.itemBCollected = false;
+            gameState.snackBought = false;
+            gameState.remainingBudget = 300;
+            
+            updateLevel3HUD();
+            renderGrid();
+        }
+
+        function updateLevel3HUD() {
+            document.getElementById('l3-rem-budget').innerText = gameState.remainingBudget;
+            let count = 0;
+            if (gameState.itemACollected) count++;
+            if (gameState.itemBCollected) count++;
+            document.getElementById('l3-items-display').innerText = `${count}/2`;
+        }
+
+        function renderGrid() {
+            const container = document.getElementById('grid-container');
+            container.innerHTML = '';
+
+            // Grid Map Items Layout:
+            // (0,0): Start Cart
+            // (1,2): Item A (Apple Pack - 100 Baht)
+            // (3,2): Item B (Milk Carton - 120 Baht)
+            // (4,4): Checkout Flag
+            // Obstacles: (2,1), (3,3)
+
+            for (let y = 0; y < 5; y++) {
+                for (let x = 0; x < 5; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell rounded-lg border border-slate-700/60 bg-slate-800/80 flex items-center justify-center relative text-lg md:text-xl font-bold';
+
+                    // Draw Items
+                    if (x === 0 && y === 0) {
+                        cell.classList.add('bg-emerald-950/40');
+                    }
+
+                    if (x === 1 && y === 2) {
+                        cell.innerHTML = gameState.itemACollected ? '✅' : '🍎';
+                        cell.title = 'สินค้า A: แอปเปิ้ล (100 บาท)';
+                    } else if (x === 3 && y === 2) {
+                        cell.innerHTML = gameState.itemBCollected ? '✅' : '🥛';
+                        cell.title = 'สินค้า B: นมกล่อง (120 บาท)';
+                    } else if (x === 4 && y === 4) {
+                        cell.innerHTML = '🚩';
+                        cell.title = 'แคชเชียร์ชำระเงิน';
+                        cell.classList.add('bg-yellow-500/20');
+                    } else if ((x === 2 && y === 1) || (x === 3 && y === 3)) {
+                        cell.innerHTML = '⚠️';
+                        cell.title = 'สิ่งกีดขวาง (พื้นเปียกกำลังทำความสะอาด)';
+                        cell.classList.add('bg-red-900/30');
+                    }
+
+                    // Draw Cart Overlay
+                    if (x === gameState.cartPos.x && y === gameState.cartPos.y) {
+                        const cartElem = document.createElement('div');
+                        const arrows = ['⬆️', '➡️', '⬇️', '⬅️'];
+                        cartElem.className = 'absolute inset-0 bg-yellow-400 border-2 border-slate-900 rounded-lg flex flex-col items-center justify-center shadow-lg transform transition-all duration-300 z-10 text-xs md:text-sm';
+                        cartElem.innerHTML = `🛒<span class="text-[9px] leading-none">${arrows[gameState.cartDir]}</span>`;
+                        cell.appendChild(cartElem);
+                    }
+
+                    container.appendChild(cell);
+                }
+            }
+        }
+
+        const commandLabels = {
+            'MOVE_FORWARD': { label: 'เดินหน้า', icon: 'fa-arrow-up', color: 'bg-blue-500' },
+            'TURN_LEFT': { label: 'เลี้ยวซ้าย', icon: 'fa-undo', color: 'bg-indigo-500' },
+            'TURN_RIGHT': { label: 'เลี้ยวขวา', icon: 'fa-redo', color: 'bg-indigo-500' },
+            'PICK_ITEM': { label: 'หยิบสินค้า', icon: 'fa-hand-holding', color: 'bg-amber-500' },
+            'IF_MONEY_SNACK': { label: 'ถ้าเงิน > 50 ซื้อขนม', icon: 'fa-cookie-bite', color: 'bg-purple-600' }
+        };
+
+        function addBlock(cmdType) {
+            if (gameState.isExecuting) return;
+            playSound('click');
+            gameState.commands.push(cmdType);
+            renderSequenceBlocks();
+        }
+
+        function removeBlock(idx) {
+            if (gameState.isExecuting) return;
+            playSound('click');
+            gameState.commands.splice(idx, 1);
+            renderSequenceBlocks();
+        }
+
+        function clearBlocks() {
+            if (gameState.isExecuting) return;
+            playSound('click');
+            gameState.commands = [];
+            renderSequenceBlocks();
+            resetGridPosition();
+        }
+
+        function renderSequenceBlocks(highlightIdx = -1) {
+            const container = document.getElementById('blocks-sequence');
+            if (gameState.commands.length === 0) {
+                container.innerHTML = `<span id="empty-seq-msg" class="text-xs text-slate-400 italic self-center mx-auto">ยังไม่มีคำสั่ง กดปุ่มบล็อกด้านบนเพื่อสร้างอัลกอริทึม</span>`;
+                return;
+            }
+
+            container.innerHTML = '';
+            gameState.commands.forEach((cmd, idx) => {
+                const info = commandLabels[cmd];
+                const block = document.createElement('div');
+                const isCurrent = idx === highlightIdx;
+                block.className = `pixel-btn text-white text-xs px-2 py-1 rounded flex items-center gap-1 text-[11px] ${info.color} ${isCurrent ? 'ring-4 ring-yellow-400 scale-105 z-10' : ''}`;
+                block.innerHTML = `
+                    <span class="font-bold text-[10px] text-yellow-200">${idx + 1}.</span>
+                    <i class="fas ${info.icon}"></i>
+                    <span>${info.label}</span>
+                    <button onclick="removeBlock(${idx})" class="ml-1 text-red-200 hover:text-white font-bold">&times;</button>
+                `;
+                container.appendChild(block);
+            });
+        }
+
+        function resetGridPosition() {
+            gameState.cartPos = { x: 0, y: 0 };
+            gameState.cartDir = 1;
+            gameState.itemACollected = false;
+            gameState.itemBCollected = false;
+            gameState.snackBought = false;
+            gameState.remainingBudget = 300;
+            updateLevel3HUD();
+            renderGrid();
+        }
+
+        async function runAlgorithm() {
+            if (gameState.commands.length === 0) {
+                showToast('กรุณาเลือกเพิ่มบล็อกคำสั่งก่อนกด Run!', '⚠️');
+                return;
+            }
+            if (gameState.isExecuting) return;
+
+            gameState.isExecuting = true;
+            resetGridPosition();
+
+            document.getElementById('btn-run-algo').disabled = true;
+            document.getElementById('btn-debug-algo').disabled = true;
+
+            let failed = false;
+
+            for (let i = 0; i < gameState.commands.length; i++) {
+                renderSequenceBlocks(i);
+                const stepResult = await executeStep(gameState.commands[i]);
+                if (!stepResult.success) {
+                    failed = true;
+                    showToast(stepResult.message, '❌');
+                    playSound('error');
+                    break;
+                }
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+
+            renderSequenceBlocks(-1);
+            gameState.isExecuting = false;
+            document.getElementById('btn-run-algo').disabled = false;
+            document.getElementById('btn-debug-algo').disabled = false;
+
+            if (!failed) {
+                checkAlgorithmCompletion();
+            }
+        }
+
+        async function debugAlgorithm() {
+            if (gameState.commands.length === 0) {
+                showToast('ไม่มีโค้ดให้ Debug! กรุณาเรียงคำสั่งก่อน', '⚠️');
+                return;
+            }
+            showToast('โหมด Debug: รถเข็นจะทำงานช้าลงเพื่อให้สังเกตความผิดพลาดทีละสเต็ป!', '🐛');
+            
+            gameState.isExecuting = true;
+            resetGridPosition();
+
+            document.getElementById('btn-run-algo').disabled = true;
+            document.getElementById('btn-debug-algo').disabled = true;
+
+            let failed = false;
+
+            for (let i = 0; i < gameState.commands.length; i++) {
+                renderSequenceBlocks(i);
+                const stepResult = await executeStep(gameState.commands[i]);
+                if (!stepResult.success) {
+                    failed = true;
+                    showToast(`Debug พบข้อผิดพลาดที่สเต็ป ${i + 1}: ${stepResult.message}`, '🐛');
+                    playSound('error');
+                    break;
+                }
+                await new Promise(resolve => setTimeout(resolve, 900));
+            }
+
+            renderSequenceBlocks(-1);
+            gameState.isExecuting = false;
+            document.getElementById('btn-run-algo').disabled = false;
+            document.getElementById('btn-debug-algo').disabled = false;
+
+            if (!failed) {
+                checkAlgorithmCompletion();
+            }
+        }
+
+        async function executeStep(command) {
+            playSound('step');
+            
+            // Directions: 0: Up, 1: Right, 2: Down, 3: Left
+            const dx = [0, 1, 0, -1];
+            const dy = [-1, 0, 1, 0];
+
+            if (command === 'MOVE_FORWARD') {
+                const nextX = gameState.cartPos.x + dx[gameState.cartDir];
+                const nextY = gameState.cartPos.y + dy[gameState.cartDir];
+
+                // Check Map Boundary
+                if (nextX < 0 || nextX >= 5 || nextY < 0 || nextY >= 5) {
+                    return { success: false, message: 'ชนขอบซูเปอร์มาร์เก็ต! ลองปรับทิศทางใหม่' };
+                }
+
+                // Check Obstacles
+                if ((nextX === 2 && nextY === 1) || (nextX === 3 && nextY === 3)) {
+                    return { success: false, message: 'ลื่นชนป้ายพื้นเปียก! ต้องเลี้ยวหลบสิ่งกีดขวาง' };
+                }
+
+                gameState.cartPos = { x: nextX, y: nextY };
+                renderGrid();
+                return { success: true };
+
+            } else if (command === 'TURN_LEFT') {
+                gameState.cartDir = (gameState.cartDir + 3) % 4;
+                renderGrid();
+                return { success: true };
+
+            } else if (command === 'TURN_RIGHT') {
+                gameState.cartDir = (gameState.cartDir + 1) % 4;
+                renderGrid();
+                return { success: true };
+
+            } else if (command === 'PICK_ITEM') {
+                const { x, y } = gameState.cartPos;
+                if (x === 1 && y === 2) {
+                    if (gameState.itemACollected) return { success: false, message: 'หยิบแอปเปิ้ลไปแล้ว!' };
+                    if (gameState.remainingBudget < 100) return { success: false, message: 'งบประมาณไม่พอซื้อแอปเปิ้ล!' };
+                    
+                    gameState.itemACollected = true;
+                    gameState.remainingBudget -= 100;
+                    updateLevel3HUD();
+                    renderGrid();
+                    return { success: true };
+                } else if (x === 3 && y === 2) {
+                    if (gameState.itemBCollected) return { success: false, message: 'หยิบนมไปแล้ว!' };
+                    if (gameState.remainingBudget < 120) return { success: false, message: 'งบประมาณไม่พอนมกล่อง!' };
+
+                    gameState.itemBCollected = true;
+                    gameState.remainingBudget -= 120;
+                    updateLevel3HUD();
+                    renderGrid();
+                    return { success: true };
+                } else {
+                    return { success: false, message: 'ตำแหน่งนี้ไม่มีสินค้าให้หยิบ!' };
+                }
+
+            } else if (command === 'IF_MONEY_SNACK') {
+                // Condition check: If money > 50, buy bonus snack (costs 30)
+                if (gameState.remainingBudget > 50) {
+                    gameState.snackBought = true;
+                    gameState.remainingBudget -= 30;
+                    updateLevel3HUD();
+                    showToast('เงื่อนไขเป็นจริง! ซื้อขนมพิเศษเพิ่ม +Bonus Score!', '🍪');
+                    return { success: true };
+                } else {
+                    showToast('เงื่อนไขเป็นเท็จ (เงินเหลือน้อยกว่า 50): ข้ามการซื้อขนม', 'ℹ️');
+                    return { success: true };
+                }
+            }
+
+            return { success: true };
+        }
+
+        function checkAlgorithmCompletion() {
+            const { x, y } = gameState.cartPos;
+            const atCheckout = (x === 4 && y === 4);
+            const allItemsPicked = gameState.itemACollected && gameState.itemBCollected;
+
+            if (atCheckout && allItemsPicked) {
+                playSound('success');
+                let bonus = gameState.snackBought ? 10 : 0;
+                updateScore(30 + bonus);
+
+                showConceptModal(
+                    'Algorithm Design & Debugging',
+                    'การวางลำดับขั้นตอน และการตรวจสอบแก้ไขข้อผิดพลาด',
+                    `
+                    <p class="mb-2">สุดยอดมาก! เขียนอัลกอริทึมสั่งรถเข็นให้หยิบของครบตามงบประมาณและเข้าจุดชำระเงินได้อย่างแม่นยำ!</p>
+                    <div class="bg-blue-100 p-2.5 rounded-lg border border-blue-300 text-blue-900 font-semibold mb-2">
+                        💡 ในการเขียนโปรแกรม: อัลกอริทึมที่ดีต้องวางลำดับขั้นตอนชัดเจน และเมื่อพบข้อผิดพลาด การ Debug จะช่วยให้แก้ไขโค้ดได้ตรงจุด!
+                    </div>
+                    `,
+                    () => showFinalSummary()
+                );
+            } else if (!allItemsPicked && atCheckout) {
+                playSound('error');
+                showToast('ถึงแคชเชียร์แล้ว แต่ยังหยิบสินค้าไม่ครบ 2 ชิ้น!', '⚠️');
+            } else {
+                showToast('ยังเดินทางไม่ถึงแคชเชียร์ (จุด 🚩)! ลองเพิ่มคำสั่งให้เดินไปถึงมุมขวาล่าง', '💡');
+            }
+        }
+
+        function showConceptModal(title, pillar, bodyHTML, nextCallback) {
+            document.getElementById('modal-concept-title').innerText = title;
+            document.getElementById('modal-concept-pillar').innerText = pillar;
+            document.getElementById('modal-concept-body').innerHTML = bodyHTML;
+            gameState.pendingNextLevel = nextCallback;
+
+            document.getElementById('concept-modal').classList.remove('hidden');
+
+            // Trigger confetti
+            confetti({
+                particleCount: 50,
+                spread: 60,
+                origin: { y: 0.6 }
+            });
+        }
+
+        function closeConceptModal() {
+            playSound('click');
+            document.getElementById('concept-modal').classList.add('hidden');
+            if (typeof gameState.pendingNextLevel === 'function') {
+                gameState.pendingNextLevel();
+                gameState.pendingNextLevel = null;
+            }
+        }
+
+        function showFinalSummary() {
+            document.getElementById('final-ct-score').innerText = `${gameState.ctScore}%`;
+            document.getElementById('final-summary-modal').classList.remove('hidden');
+
+            confetti({
+                particleCount: 120,
+                spread: 100,
+                origin: { y: 0.5 }
+            });
+        }
+
+        function restartGame() {
+            playSound('click');
+            document.getElementById('final-summary-modal').classList.add('hidden');
+            document.getElementById('level-3-screen').classList.add('hidden');
+            document.getElementById('welcome-screen').classList.remove('hidden');
+
+            // Reset States
+            gameState.ctScore = 0;
+            gameState.currentLevel = 1;
+            gameState.commands = [];
+            document.getElementById('ct-bar').style.width = '0%';
+            document.getElementById('score-text').innerText = '0%';
+
+            // Reset Nav Bar
+            document.getElementById('nav-stage-1').className = 'flex-1 text-center py-1.5 px-2 rounded-lg bg-emerald-600 text-white border-2 border-slate-800 font-bold shadow-sm';
+            document.getElementById('nav-stage-2').className = 'flex-1 text-center py-1.5 px-2 rounded-lg bg-slate-200 text-slate-500 border-2 border-slate-400';
+            document.getElementById('nav-stage-3').className = 'flex-1 text-center py-1.5 px-2 rounded-lg bg-slate-200 text-slate-500 border-2 border-slate-400';
+        }
+    </script>
+</body>
+</html>
